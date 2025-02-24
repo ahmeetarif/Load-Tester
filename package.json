@@ -1,0 +1,26 @@
+{
+    "name": "api-stress-tester",
+    "version": "1.0.0",
+    "description": "A powerful API stress testing tool for simulating concurrent users and measuring performance",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+        "api",
+        "stress-test",
+        "performance",
+        "load-testing"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^1.6.2",
+        "cli-progress": "^3.12.0",
+        "commander": "^11.1.0",
+        "colors": "^1.4.0",
+        "ora": "^5.4.1"
+    }
+}
