@@ -32,7 +32,7 @@ export class StressTest {
 
       await axios(requestConfig);
       const latency = Date.now() - startTime;
-      
+
       this.metrics.successCount++;
       this.metrics.totalLatency += latency;
       this.metrics.minLatency = Math.min(this.metrics.minLatency, latency);
@@ -46,12 +46,12 @@ export class StressTest {
   async run(apiConfig) {
     const totalRequests = parseInt(this.options.number);
     const concurrentUsers = parseInt(this.options.concurrent);
-    
+
     console.log('\nStarting stress test with following configuration:'.cyan);
-    console.log(URL: ${this.options.url});
-    console.log(Total Requests: ${totalRequests});
-    console.log(Concurrent Users: ${concurrentUsers});
-    console.log(HTTP Method: ${this.options.method}\n);
+    console.log(`URL: ${this.options.url}`);
+    console.log(`Total Requests: ${totalRequests}`);
+    console.log(`Concurrent Users: ${concurrentUsers}`);
+    console.log(`HTTP Method: ${this.options.method}\n`);
 
     this.progressBar.start(totalRequests, 0);
 
@@ -70,16 +70,16 @@ export class StressTest {
 
   displayResults(totalRequests) {
     const avgLatency = this.metrics.totalLatency / this.metrics.successCount || 0;
-    
+
     console.log('\nTest Results:'.green);
     console.log('============'.green);
-    console.log(Total Requests: ${totalRequests});
-    console.log(Successful Requests: ${this.metrics.successCount}.green);
-    console.log(Failed Requests: ${this.metrics.failureCount}.red);
-    console.log(Success Rate: ${((this.metrics.successCount / totalRequests) * 100).toFixed(2)}%);
-    console.log(\nLatency Statistics:.yellow);
-    console.log(Minimum: ${this.metrics.minLatency}ms);
-    console.log(Maximum: ${this.metrics.maxLatency}ms);
-    console.log(Average: ${avgLatency.toFixed(2)}ms);
+    console.log(`Total Requests: ${totalRequests}`);
+    console.log(`Successful Requests: ${this.metrics.successCount}`.green);
+    console.log(`Failed Requests: ${this.metrics.failureCount}`.red);
+    console.log(`Success Rate: ${((this.metrics.successCount / totalRequests) * 100).toFixed(2)}%`);
+    console.log('\nLatency Statistics:'.yellow);
+    console.log(`Minimum: ${this.metrics.minLatency}ms`);
+    console.log(`Maximum: ${this.metrics.maxLatency}ms`);
+    console.log(`Average: ${avgLatency.toFixed(2)}ms`);
   }
 }
