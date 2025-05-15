@@ -8,7 +8,7 @@ const test = new FlowLoader({
       name: 'Get Token',
       method: 'POST', 
       url: 'https://api.dropyonline.com/api/v1/auth/login',
-      data: { email: 'firatanil995@gmail.com', password: 'Ahmet2024' },
+      data: { email: 'NO', password: 'NO' },
       saveAs: 'auth'
     },
     {
@@ -16,7 +16,7 @@ const test = new FlowLoader({
       method: 'GET', 
       url: 'https://api.dropyonline.com/api/v1/account/marketplaces',
       headers: {
-        'Authorization': 'Bearer {{auth.Result.accessToken}}',
+        'Authorization': 'Bearer {{auth.Result.accessToken}}', //  Use the token from the previous step
       }
     }
   ]
