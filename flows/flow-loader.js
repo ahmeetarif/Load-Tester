@@ -6,7 +6,7 @@ export class FlowLoader {
   constructor(options) {
     this.options = options;
     this.metrics = {
-      flowMetrics: [], // Will hold metrics for each step in the flow
+      flowMetrics: [],
       totalLatency: 0,
       minLatency: Infinity,
       maxLatency: 0,
@@ -15,7 +15,6 @@ export class FlowLoader {
       maxFlowTime: 0
     };
     
-    // Initialize metrics for each step in the flow
     if (this.options.flow && Array.isArray(this.options.flow)) {
       this.options.flow.forEach((step, index) => {
         this.metrics.flowMetrics[index] = {
@@ -41,22 +40,18 @@ export class FlowLoader {
     const step = this.options.flow[stepIndex];
     
     try {
-      // Clone the request config
       const requestConfig = { ...config };
       
-      // Replace any placeholder values with values from previous responses
       if (typeof requestConfig.url === 'string') {
         requestConfig.url = this.replaceTemplateValues(requestConfig.url, flowContext);
       }
       
-      // Handle headers with template values
       if (requestConfig.headers) {
         Object.keys(requestConfig.headers).forEach(key => {
           requestConfig.headers[key] = this.replaceTemplateValues(requestConfig.headers[key], flowContext);
         });
       }
       
-      // Handle data with template values
       if (requestConfig.data) {
         if (typeof requestConfig.data === 'string') {
           requestConfig.data = this.replaceTemplateValues(requestConfig.data, flowContext);
@@ -70,14 +65,12 @@ export class FlowLoader {
       const response = await axios(requestConfig);
       const latency = Date.now() - startTime;
       
-      // Run assertions if they exist
       let assertionsPassed = true;
       let assertionErrors = [];
       
       if (step.assertions && Array.isArray(step.assertions)) {
         for (const assertion of step.assertions) {
           try {
-            // Execute the assertion
             const result = await this.runAssertion(assertion, response, flowContext);
             
             if (!result.passed) {
@@ -91,7 +84,6 @@ export class FlowLoader {
         }
       }
       
-      // Update step metrics
       const metrics = this.metrics.flowMetrics[stepIndex];
       if (assertionsPassed) {
         metrics.successCount++;
@@ -104,7 +96,6 @@ export class FlowLoader {
       metrics.minLatency = Math.min(metrics.minLatency, latency);
       metrics.maxLatency = Math.max(metrics.maxLatency, latency);
       
-      // Return response data with assertion results
       return {
         success: assertionsPassed,
         data: response.data,
@@ -124,10 +115,8 @@ export class FlowLoader {
   }
   
   async runAssertion(assertion, response, flowContext) {
-    // Handle different assertion types
     switch (assertion.type) {
       case 'statusCode':
-        // Check if status code matches expected value
         return {
           passed: response.status === assertion.value,
           error: response.status !== assertion.value ? 
@@ -198,7 +187,6 @@ export class FlowLoader {
         }
         
       case 'responseTime':
-        // Check response time against threshold
         const responseTime = response.config.metadata.responseTime;
         return {
           passed: responseTime <= assertion.value,
@@ -207,7 +195,6 @@ export class FlowLoader {
         };
         
       case 'header':
-        // Check for header existence or value
         const headerValue = response.headers[assertion.name];
         return {
           passed: assertion.value ? 
@@ -221,13 +208,9 @@ export class FlowLoader {
         };
       
       case 'custom':
-        // Run custom assertion function
         try {
-          // Convert string function to actual function if needed
           let assertFn = assertion.fn;
           if (typeof assertFn === 'string') {
-            // Very carefully use new Function to create function from string
-            // Note: This has security implications if user input is not trusted
             assertFn = new Function('response', 'context', assertFn);
           }
           
@@ -252,14 +235,12 @@ export class FlowLoader {
     }
   }
   
-  // Helper function to get a value from an object by path (e.g., "user.profile.name")
   getValueByPath(obj, path) {
     return path.split('.').reduce((current, key) => {
       return current !== undefined && current !== null ? current[key] : undefined;
     }, obj);
   }
   
-  // Replace template values like {{token}} with values from the context
   replaceTemplateValues(str, context) {
     if (typeof str !== 'string') return str;
     
@@ -282,7 +263,6 @@ export class FlowLoader {
     let allStepsSuccessful = true;
     let flowAssertionFailures = 0;
     
-    // Execute each step in the flow sequentially
     for (let i = 0; i < this.options.flow.length; i++) {
       const step = this.options.flow[i];
       const requestConfig = {
@@ -294,15 +274,12 @@ export class FlowLoader {
       
       const result = await this.makeRequest(requestConfig, i, flowStartTime, flowContext);
       
-      // Check if the request failed or assertions failed
       if (!result.success) {
         allStepsSuccessful = false;
         
-        // Track assertion failures separately
         if (result.assertionErrors) {
           flowAssertionFailures++;
           
-          // Log assertion errors if verbose is enabled
           if (this.options.verbose) {
             console.log(`\nAssertion failure in step ${step.name || i+1}:`.yellow);
             result.assertionErrors.forEach(err => console.log(`  - ${err}`.yellow));
@@ -314,12 +291,10 @@ export class FlowLoader {
         }
       }
       
-      // Save step response to context for use in subsequent steps
       if (result.success && step.saveAs) {
         flowContext[step.saveAs] = result.data;
       }
       
-      // Also save the full response object for more complex assertions
       if (step.saveResponseAs) {
         flowContext[step.saveResponseAs] = {
           data: result.data,
@@ -331,7 +306,6 @@ export class FlowLoader {
     
     const flowTime = Date.now() - flowStartTime;
     
-    // Update overall flow metrics
     if (allStepsSuccessful) {
       this.metrics.successCount++;
       this.metrics.totalFlowTime += flowTime;
@@ -339,7 +313,6 @@ export class FlowLoader {
       this.metrics.maxFlowTime = Math.max(this.metrics.maxFlowTime, flowTime);
     } else {
       this.metrics.failureCount++;
-      // Track assertion failures at the flow level
       if (flowAssertionFailures > 0) {
         this.metrics.assertionFailures = (this.metrics.assertionFailures || 0) + 1;
       }
@@ -353,7 +326,6 @@ export class FlowLoader {
   }
 
   async run() {
-    // Validate required options
     if (!this.options.flow || !Array.isArray(this.options.flow) || this.options.flow.length === 0) {
       console.error('Error: Flow configuration is required and must be an array of steps'.red);
       return;
@@ -376,7 +348,6 @@ export class FlowLoader {
     
     this.progressBar.start(totalFlows, 0);
     
-    // Create batches of concurrent flows
     for (let i = 0; i < totalFlows; i += concurrentUsers) {
       const batchSize = Math.min(concurrentUsers, totalFlows - i);
       const batch = Array(batchSize).fill().map(() => this.executeFlow());
@@ -395,7 +366,6 @@ export class FlowLoader {
     console.log(`Successful Flows: ${this.metrics.successCount}`.green);
     console.log(`Failed Flows: ${this.metrics.failureCount}`.red);
     
-    // Display assertion failures if any
     if (this.metrics.assertionFailures) {
       console.log(`Flows With Assertion Failures: ${this.metrics.assertionFailures}`.yellow);
     }
@@ -416,7 +386,6 @@ export class FlowLoader {
       console.log(`\n${stepMetric.name} (${step.method} ${step.url}):`);
       console.log(`  Success: ${stepMetric.successCount}, Failures: ${stepMetric.failureCount}`);
       
-      // Display assertion failures for this step if any
       if (stepMetric.assertionFailures) {
         console.log(`  Assertion Failures: ${stepMetric.assertionFailures}`.yellow);
       }
@@ -428,7 +397,6 @@ export class FlowLoader {
         console.log(`  Avg Latency: ${avgLatency.toFixed(2)}ms`);
       }
       
-      // Display assertion details if configured
       if (this.options.verbose && step.assertions && Array.isArray(step.assertions)) {
         console.log(`  Assertions: ${step.assertions.length}`);
         step.assertions.forEach((assertion, i) => {
